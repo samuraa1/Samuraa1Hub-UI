@@ -3948,6 +3948,7 @@ local Library do
                 Stats = Data.Stats or {}
             }
 
+            local AddQuickCard
             local DashItems = {} do
                 -- Tab button (same as normal page)
                 DashItems["Inactive"] = Instances:Create("TextButton", {
@@ -4343,7 +4344,7 @@ local Library do
 
                 DashItems["QACards"] = {}
 
-                local function AddQuickCard(CardData, Index)
+                AddQuickCard = function(CardData, Index)
                     local cardW = 0
                     local numCards = #DashPage.QuickAccess
                     -- Will be sized by UIFlexItem or calculated; we use proportional
@@ -7514,7 +7515,7 @@ local Library do
                 return Keybind.Key, Keybind.ModeSelected, Keybind.Toggled
             end
 
-            function Keybind:Set(Key)
+            function Keybind:Set(Key, SkipCallback)
                 if StringFind(tostring(Key), "Enum") then 
                     Keybind.Key = tostring(Key)
 
@@ -7532,7 +7533,7 @@ local Library do
                         Toggled = Keybind.Toggled
                     }
 
-                    if Data.Callback then 
+                    if Data.Callback and not SkipCallback then 
                         Library:SafeCall(Data.Callback, Keybind.Toggled)
                     end
 
@@ -7557,7 +7558,7 @@ local Library do
                     Keybind.Value = TextToDisplay
                     Items["KeyButton"].Instance.Text = TextToDisplay
 
-                    if Data.Callback then 
+                    if Data.Callback and not SkipCallback then 
                         Library:SafeCall(Data.Callback, Keybind.Toggled)
                     end
 
@@ -7566,7 +7567,7 @@ local Library do
                     Keybind.ModeSelected = Key
                     Keybind:SetMode(Key)
 
-                    if Data.Callback then 
+                    if Data.Callback and not SkipCallback then 
                         Library:SafeCall(Data.Callback, Keybind.Toggled)
                     end
 
@@ -7687,7 +7688,7 @@ local Library do
                 Keybind:Set({
                     Mode = Keybind.Mode or "Toggle",
                     Key = Keybind.Default,
-                })
+                }, true)
             end
 
             Library.SetFlags[Keybind.Flag] = function(Value)
