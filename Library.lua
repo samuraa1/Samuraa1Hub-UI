@@ -78,9 +78,9 @@ local Library do
         FadeSpeed = 0.2,
 
         Folders = {
-            Directory = "lyapossss",
-            Configs = "lyapossss/Configs",
-            Assets = "lyapossss/Assets",
+            Directory = "Samuraa1Hub",
+            Configs = "Samuraa1Hub/Configs",
+            Assets = "Samuraa1Hub/Assets",
         },
 
         -- Ignore below
@@ -187,7 +187,6 @@ local Library do
 
     local Themes = {
         ["Preset"] = {
-            ["AccentGradient"] = FromRGB(0, 195, 255),   -- Slightly deeper blue accent
             ["Background 2"] = FromRGB(10, 10, 12),      -- Very dark gray
             ["Background"] = FromRGB(12, 12, 14),        -- Main near-black background
             ["Text"] = FromRGB(235, 235, 235),           -- Slightly dimmed light text
@@ -195,7 +194,8 @@ local Library do
             ["Section Top"] = FromRGB(28, 27, 31),       -- Dark section header
             ["Section Background"] = FromRGB(10, 10, 12),-- Deep black section background
             ["Section Background 2"] = FromRGB(14, 14, 16),-- Alternate section, minimal difference
-            ["Accent"] = FromRGB(0, 116, 224),           -- Darker blue accent for consistency
+            ["Accent"] = FromRGB(100, 149, 255),        -- Blue preset (default hub look)
+            ["AccentGradient"] = FromRGB(70, 110, 200),  -- Blue gradient pair
             ["Element"] = FromRGB(16, 16, 18)            -- Deep gray for UI elements
         }
     }
@@ -2485,7 +2485,7 @@ local Library do
                 Items = { },
                 IsOpen = false,
                 CurrentAlignment = "LeftTabs",
-                TabSwitchCooldownSec = 2,
+                TabSwitchCooldownSec = 1,
                 _tabCooldownUntil = 0
             }
 
@@ -2497,7 +2497,7 @@ local Library do
                     AnchorPoint = Vector2New(0.5, 0.5),
                     BackgroundTransparency = 0.12,
                     Position = UDim2New(0.5519999861717224, 0, 0.5, 0),
-                    Size = IsMobile and UDim2New(0, 620, 0, 500) or UDim2New(0, 820, 0, 644),
+                    Size = Data.Size or (IsMobile and UDim2New(0, 520, 0, 420) or UDim2New(0, 940, 0, 720)),
                     ZIndex = 2,
                     BorderSizePixel = 0,
                     ClipsDescendants = true,
@@ -2513,7 +2513,7 @@ local Library do
                     Instances:Create("UIScale", {
                         Parent = Items["MainFrame"].Instance,
                         Name = "\0",
-                        Scale = 0.78
+                        Scale = Data.MobileScale or 0.74
                     })                    
                 end
 
@@ -2607,6 +2607,25 @@ local Library do
                     ClipsDescendants = true,
                     BackgroundColor3 = FromRGB(27, 25, 29)
                 })  Items["LeftTabs"]:AddToTheme({BackgroundColor3 = "Background"})
+
+                Items["LeftTabsScroll"] = Instances:Create("ScrollingFrame", {
+                    Parent = Items["LeftTabs"].Instance,
+                    Name = "\0",
+                    BackgroundTransparency = 1,
+                    BorderSizePixel = 0,
+                    Size = UDim2New(1, 0, 1, 0),
+                    Position = UDim2New(0, 0, 0, 0),
+                    AnchorPoint = Vector2New(0, 0),
+                    CanvasSize = UDim2New(0, 0, 0, 0),
+                    AutomaticCanvasSize = Enum.AutomaticSize.Y,
+                    ScrollingDirection = Enum.ScrollingDirection.Y,
+                    ScrollBarThickness = 5,
+                    ScrollBarImageColor3 = FromRGB(90, 165, 255),
+                    ScrollingEnabled = true,
+                    Active = true,
+                    ClipsDescendants = true,
+                    ZIndex = 3,
+                })
 
                 Library:MakeBlurred(Items["LeftTabs"], Window)
 
@@ -2778,14 +2797,14 @@ local Library do
                 })
                 
                 Instances:Create("UIListLayout", {
-                    Parent = Items["LeftTabs"].Instance,
+                    Parent = Items["LeftTabsScroll"].Instance,
                     Name = "\0",
                     Padding = UDimNew(0, 12),
                     SortOrder = Enum.SortOrder.LayoutOrder
                 })
                 
                 Instances:Create("UIPadding", {
-                    Parent = Items["LeftTabs"].Instance,
+                    Parent = Items["LeftTabsScroll"].Instance,
                     Name = "\0",
                     PaddingTop = UDimNew(0, 15),
                     PaddingBottom = UDimNew(0, 15),
@@ -3461,7 +3480,7 @@ local Library do
         Library.Category = function(self, Name)
             local Items = { } do 
                 Items["Category"] = Instances:Create("TextLabel", {
-                    Parent = self.Items["LeftTabs"].Instance,
+                    Parent = self.Items["LeftTabsScroll"].Instance,
                     Name = "\0",
                     FontFace = Library.Font,
                     TextColor3 = FromRGB(240, 240, 240),
@@ -3483,7 +3502,7 @@ local Library do
         Library.TabDivider = function(self)
             local Win = self
             Instances:Create("Frame", {
-                Parent = Win.Items["LeftTabs"].Instance,
+                Parent = Win.Items["LeftTabsScroll"].Instance,
                 Name = "\0",
                 BackgroundColor3 = FromRGB(38, 36, 46),
                 Size = UDim2New(1, -24, 0, 1),
@@ -3511,7 +3530,7 @@ local Library do
 
             local Items = { } do
                 Items["Inactive"] = Instances:Create("TextButton", {
-                    Parent = Page.Window.Items["LeftTabs"].Instance,
+                    Parent = Page.Window.Items["LeftTabsScroll"].Instance,
                     Name = "\0",
                     FontFace = Library.Font,
                     TextColor3 = FromRGB(0, 0, 0),
@@ -3662,6 +3681,21 @@ local Library do
 
             local Debounce = false
 
+            function Page:InstantDeactivate()
+                Items["Inactive"].Instance.BackgroundTransparency = 1
+                Items["TabIndicator"].Instance.BackgroundTransparency = 1
+                Items["Page"].Instance.Visible = false
+                Items["Page"].Instance.Parent = Library.UnusedHolder.Instance
+                Items["Page"].Instance.GroupTransparency = 1
+                Page.Active = false
+                Debounce = false
+                for _, Sec in Page.Sections do
+                    task.spawn(function()
+                        Sec:TweenElements(false, true)
+                    end)
+                end
+            end
+
             function Page:Turn(Bool)
                 if Debounce then 
                     return 
@@ -3733,14 +3767,18 @@ local Library do
                 if now < (W._tabCooldownUntil or 0) then
                     return
                 end
-                for Index, Value in Page.Window.Pages do 
+                for _, Value in Page.Window.Pages do 
                     if Value == Page and Page.Active then
                         return
                     end
-
-                    Value:Turn(Value == Page)
                 end
-                W._tabCooldownUntil = now + (W.TabSwitchCooldownSec or 2)
+                for _, Value in Page.Window.Pages do 
+                    if Value ~= Page and Value.InstantDeactivate then
+                        Value:InstantDeactivate()
+                    end
+                end
+                Page:Turn(true)
+                W._tabCooldownUntil = now + (W.TabSwitchCooldownSec or 1)
             end)
 
             if #Page.Window.Pages == 0 then 
@@ -3782,7 +3820,7 @@ local Library do
             local DashItems = {} do
                 -- Tab button (same as normal page)
                 DashItems["Inactive"] = Instances:Create("TextButton", {
-                    Parent = Window.Items["LeftTabs"].Instance,
+                    Parent = Window.Items["LeftTabsScroll"].Instance,
                     Name = "\0",
                     FontFace = Library.Font,
                     TextColor3 = FromRGB(0, 0, 0),
@@ -4470,10 +4508,17 @@ local Library do
                             local W = DashPage.Window
                             local now = tick()
                             if now < (W._tabCooldownUntil or 0) then return end
+                            local target = CardData.Tab
                             for _, P in DashPage.Window.Pages do
-                                P:Turn(P == CardData.Tab)
+                                if P == target and target.Active then return end
                             end
-                            W._tabCooldownUntil = now + (W.TabSwitchCooldownSec or 2)
+                            for _, P in DashPage.Window.Pages do
+                                if P ~= target and P.InstantDeactivate then
+                                    P:InstantDeactivate()
+                                end
+                            end
+                            target:Turn(true)
+                            W._tabCooldownUntil = now + (W.TabSwitchCooldownSec or 1)
                         elseif type(CardData.Callback) == "function" then
                             Library:SafeCall(CardData.Callback)
                         end
@@ -4490,6 +4535,16 @@ local Library do
             end
 
             local DashDebounce = false
+
+            function DashPage:InstantDeactivate()
+                DashItems["Inactive"].Instance.BackgroundTransparency = 1
+                DashItems["TabIndicator"].Instance.BackgroundTransparency = 1
+                DashItems["Page"].Instance.Visible = false
+                DashItems["Page"].Instance.Parent = Library.UnusedHolder.Instance
+                DashItems["Page"].Instance.GroupTransparency = 1
+                DashPage.Active = false
+                DashDebounce = false
+            end
 
             function DashPage:Turn(Bool)
                 if DashDebounce then return end
@@ -4566,9 +4621,14 @@ local Library do
                 if now < (W._tabCooldownUntil or 0) then return end
                 for _, Value in DashPage.Window.Pages do
                     if Value == DashPage and DashPage.Active then return end
-                    Value:Turn(Value == DashPage)
                 end
-                W._tabCooldownUntil = now + (W.TabSwitchCooldownSec or 2)
+                for _, Value in DashPage.Window.Pages do
+                    if Value ~= DashPage and Value.InstantDeactivate then
+                        Value:InstantDeactivate()
+                    end
+                end
+                DashPage:Turn(true)
+                W._tabCooldownUntil = now + (W.TabSwitchCooldownSec or 1)
             end)
 
             if #DashPage.Window.Pages == 0 then
@@ -7071,11 +7131,12 @@ local Library do
             end
 
             function Dropdown:Refresh(List)
-                for Index, Value in Dropdown.Options do 
-                    Dropdown:Remove(Value.Name)
+                for _, opt in pairs(Dropdown.Options) do 
+                    Dropdown:Remove(opt.Name)
                 end
 
-                for Index, Value in List do 
+                List = List or {}
+                for _, Value in ipairs(List) do 
                     Dropdown:Add(Value)
                 end
             end
@@ -8291,11 +8352,12 @@ local Library do
             end
 
             function Dropdown:Refresh(List)
-                for Index, Value in Dropdown.Options do 
-                    Dropdown:Remove(Value.Name)
+                for _, opt in pairs(Dropdown.Options) do 
+                    Dropdown:Remove(opt.Name)
                 end
 
-                for Index, Value in List do 
+                List = List or {}
+                for _, Value in ipairs(List) do 
                     Dropdown:Add(Value)
                 end
             end
@@ -8524,35 +8586,37 @@ local Library do
             end)
         end
 
-        local KeybindSection = Page:Section({Name = "Keybinds", Icon = "keyboard", Side = 1}) do
-            if KeybindList and KeybindList.SetVisibility then
+        if not IsMobile then
+            local KeybindSection = Page:Section({Name = "Keybinds", Icon = "keyboard", Side = 1}) do
+                if KeybindList and KeybindList.SetVisibility then
+                    KeybindSection:Toggle({
+                        Name = "Show Keybinds List",
+                        Flag = "KeybindListVisible",
+                        Default = true,
+                        Tooltip = "Shows or hides the draggable keybind list window.",
+                        Callback = function(v)
+                            KeybindList:SetVisibility(v)
+                        end
+                    })
+                end
                 KeybindSection:Toggle({
-                    Name = "Show Keybinds List",
-                    Flag = "KeybindListVisible",
+                    Name = "Enable Menu Keybind",
+                    Flag = "MenuKeybindEnabled",
                     Default = true,
-                    Tooltip = "Shows or hides the draggable keybind list window.",
-                    Callback = function(v)
-                        KeybindList:SetVisibility(v)
+                    Tooltip = "When off, the Toggle UI keybind will not work.",
+                    Callback = function(v) end
+                })
+                KeybindSection:Keybind({
+                    Name = "Toggle UI",
+                    Flag = "MenuBind",
+                    Default = Enum.KeyCode.RightShift,
+                    Callback = function()
+                        if Library.Flags.MenuKeybindEnabled ~= false then
+                            Window:SetOpen(not Window.IsOpen)
+                        end
                     end
                 })
             end
-            KeybindSection:Toggle({
-                Name = "Enable Menu Keybind",
-                Flag = "MenuKeybindEnabled",
-                Default = true,
-                Tooltip = "When off, the Toggle UI keybind will not work.",
-                Callback = function(v) end
-            })
-            KeybindSection:Keybind({
-                Name = "Toggle UI",
-                Flag = "MenuBind",
-                Default = Enum.KeyCode.RightShift,
-                Callback = function()
-                    if Library.Flags.MenuKeybindEnabled ~= false then
-                        Window:SetOpen(not Window.IsOpen)
-                    end
-                end
-            })
         end
 
         local ConfigsSection = Page:Section({Name = "Configs", Side = 2}) do
@@ -8689,13 +8753,15 @@ local Library do
         img.Image = "rbxassetid://132511743665753"
         img.ImageColor3 = FromRGB(90, 165, 255)
         img.ScaleType = Enum.ScaleType.Fit
-        img.Rotation = 90
+        img.Rotation = 0
+        img.AnchorPoint = Vector2New(0, 0)
+        img.Position = UDim2New(0, 0, 0, 0)
         img.Parent = cursorRoot
 
         local CursorConn = RunService.RenderStepped:Connect(function()
             if not cursorRoot.Visible then return end
             local loc = UserInputService:GetMouseLocation()
-            local ox, oy = 10, 10
+            local ox, oy = 4, 4
             cursorRoot.Position = UDim2New(0, loc.X - ox, 0, loc.Y - oy)
         end)
 
