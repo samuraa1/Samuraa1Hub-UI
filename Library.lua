@@ -3499,23 +3499,15 @@ local Library do
 
         Library.TabDivider = function(self)
             local Win = self
-            local div = Instances:Create("Frame", {
+            Instances:Create("Frame", {
                 Parent = Win.Items["LeftTabsScroll"].Instance,
                 Name = "\0",
-                BackgroundColor3 = FromRGB(70, 68, 82),
-                Size = UDim2New(1, -20, 0, 2),
+                BackgroundColor3 = FromRGB(38, 36, 46),
+                Size = UDim2New(1, -24, 0, 1),
                 BorderSizePixel = 0,
-                BackgroundTransparency = 0.15,
+                BackgroundTransparency = 0.42,
                 ZIndex = 2
-            })
-            div:AddToTheme({BackgroundColor3 = "Element"})
-            Instances:Create("UIStroke", {
-                Parent = div.Instance,
-                Name = "\0",
-                Thickness = 1,
-                Transparency = 0.45,
-                ApplyStrokeMode = Enum.ApplyStrokeMode.Border,
-            }):AddToTheme({Color = "Accent"})
+            }):AddToTheme({BackgroundColor3 = "Element"})
         end
 
         Library.Page = function(self, Data)
