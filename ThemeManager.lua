@@ -6,6 +6,14 @@ local HttpService = game:GetService("HttpService")
 local Library
 
 local DEFAULT_THEMES = {
+    ["Default"] = {
+        Accent = Color3.fromRGB(100, 149, 255),
+        AccentGradient = Color3.fromRGB(70, 110, 200),
+    },
+    ["Dark"] = {
+        Accent = Color3.fromRGB(130, 130, 145),
+        AccentGradient = Color3.fromRGB(80, 80, 95),
+    },
     ["Blue"] = {
         Accent = Color3.fromRGB(100, 149, 255),
         AccentGradient = Color3.fromRGB(70, 110, 200),
@@ -34,6 +42,30 @@ local DEFAULT_THEMES = {
         Accent = Color3.fromRGB(255, 100, 180),
         AccentGradient = Color3.fromRGB(200, 60, 140),
     },
+    ["Flame"] = {
+        Accent = Color3.fromRGB(255, 90, 40),
+        AccentGradient = Color3.fromRGB(255, 200, 60),
+    },
+    ["Ice"] = {
+        Accent = Color3.fromRGB(180, 230, 255),
+        AccentGradient = Color3.fromRGB(100, 180, 255),
+    },
+    ["Gold"] = {
+        Accent = Color3.fromRGB(255, 215, 100),
+        AccentGradient = Color3.fromRGB(200, 150, 50),
+    },
+    ["Rose"] = {
+        Accent = Color3.fromRGB(255, 120, 150),
+        AccentGradient = Color3.fromRGB(200, 60, 120),
+    },
+    ["Mint"] = {
+        Accent = Color3.fromRGB(100, 220, 190),
+        AccentGradient = Color3.fromRGB(50, 160, 140),
+    },
+    ["Lavender"] = {
+        Accent = Color3.fromRGB(190, 160, 255),
+        AccentGradient = Color3.fromRGB(130, 100, 220),
+    },
 }
 
 function ThemeManager:SetLibrary(Lib)
@@ -52,15 +84,27 @@ function ThemeManager:GetThemePath(Name)
 end
 
 function ThemeManager:ListThemes()
-    local list = {}
+    local map = {}
     for name in next, DEFAULT_THEMES do
-        table.insert(list, name)
+        map[name] = true
     end
     local folder = self.Folder or "ThemeManager"
     if isfolder(folder) then
         for _, f in ipairs(listfiles(folder)) do
             local name = f:match("([^/\\]+)%.json$")
-            if name then table.insert(list, name) end
+            if name then map[name] = true end
+        end
+    end
+    local list = {}
+    for name in next, map do
+        table.insert(list, name)
+    end
+    table.sort(list)
+    for i, n in ipairs(list) do
+        if n == "Default" then
+            table.remove(list, i)
+            table.insert(list, 1, "Default")
+            break
         end
     end
     return list
@@ -121,9 +165,15 @@ function ThemeManager:BuildThemeSection(Tab)
     local selectedTheme = nil
     local customName = ""
 
-    local ThemeList = ThemeSection:Listbox({
+    local themes = self:ListThemes()
+    local ThemeList = ThemeSection:Dropdown({
+        Name = "Library theme",
         Flag = "_ThemeManagerList",
-        Items = self:ListThemes(),
+        Items = themes,
+        Default = themes[1],
+        Search = true,
+        Size = 200,
+        OptionHolderSize = 200,
         Callback = function(v)
             selectedTheme = v
         end
@@ -132,10 +182,14 @@ function ThemeManager:BuildThemeSection(Tab)
     ThemeSection:Button({
         Name = "Apply Theme",
         Callback = function()
-            if selectedTheme then
-                local ok, err = self:LoadTheme(selectedTheme)
+            local pick = selectedTheme
+            if not pick and Library and Library.Flags then
+                pick = Library.Flags["_ThemeManagerList"]
+            end
+            if pick then
+                local ok, err = self:LoadTheme(pick)
                 if ok then
-                    Library:Notification({Title = "ThemeManager", Description = "Applied theme '" .. selectedTheme .. "'.", Duration = 3})
+                    Library:Notification({Title = "ThemeManager", Description = "Applied theme '" .. pick .. "'.", Duration = 3})
                 else
                     Library:Notification({Title = "Error", Description = tostring(err), Duration = 3})
                 end
