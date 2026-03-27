@@ -2617,7 +2617,6 @@ local Library do
                     ScrollBarThickness = 5,
                     ScrollBarImageColor3 = FromRGB(90, 165, 255),
                     ScrollingEnabled = true,
-                    ScrollingElasticBehavior = Enum.ElasticBehavior.Never,
                     Active = true,
                     ClipsDescendants = true,
                     ZIndex = 3,
