@@ -643,15 +643,6 @@ local Library = {} do
 			ZIndex           = 4,
 		})
 		themed(header, { BackgroundColor3 = "Surface" })
-		make("Frame", {
-			Parent           = header, Name = uid(),
-			Size             = U2.new(1, 0, 0, 1),
-			Position         = U2.new(0, 0, 1, -1),
-			BackgroundColor3 = Library.Theme.Border,
-			BorderSizePixel  = 0,
-			ZIndex           = 5,
-		}):__index and nil
-
 		local hdrBorderLine = make("Frame", {
 			Parent           = header, Name = uid(),
 			Size             = U2.new(1, 0, 0, 1),
@@ -853,44 +844,41 @@ local Library = {} do
 					ZIndex              = 2,
 				})
 
-				local colHolder = make("Frame", {
-					Parent              = pageFrame, Name = uid(),
-					Position            = U2.fromOffset(0, 0),
-					Size                = U2.fromScale(1, 1),
-					BackgroundTransparency = 1,
-					ZIndex              = 2,
-				})
-				make("UIListLayout", {
-					Parent            = colHolder,
-					FillDirection     = Enum.FillDirection.Horizontal,
-					HorizontalFlex    = Enum.UIFlexAlignment.Fill,
-					Padding           = U(0, 8),
-					SortOrder         = Enum.SortOrder.LayoutOrder,
-					VerticalFlex      = Enum.UIFlexAlignment.Fill,
-				})
-				pad(colHolder, 8, 8, 8, 8)
+			local colHolder = make("Frame", {
+				Parent              = pageFrame, Name = uid(),
+				Position            = U2.fromOffset(0, 0),
+				Size                = U2.fromScale(1, 1),
+				BackgroundTransparency = 1,
+				ZIndex              = 2,
+				ClipsDescendants    = false,
+			})
+			pad(colHolder, 8, 8, 8, 8)
 
-				local col1 = make("ScrollingFrame", {
-					Parent                 = colHolder, Name = uid(),
-					BackgroundTransparency = 1,
-					BorderSizePixel        = 0,
-					ScrollBarThickness     = 0,
-					CanvasSize             = U2.fromOffset(0, 0),
-					AutomaticCanvasSize    = Enum.AutomaticSize.Y,
-					ZIndex                 = 2,
-				})
-				make("UIListLayout", { Parent = col1, Padding = U(0, 6), SortOrder = Enum.SortOrder.LayoutOrder })
+			local col1 = make("ScrollingFrame", {
+				Parent                 = colHolder, Name = uid(),
+				Position               = U2.fromScale(0, 0),
+				Size                   = U2.new(0.5, -4, 1, 0),
+				BackgroundTransparency = 1,
+				BorderSizePixel        = 0,
+				ScrollBarThickness     = 0,
+				CanvasSize             = U2.fromOffset(0, 0),
+				AutomaticCanvasSize    = Enum.AutomaticSize.Y,
+				ZIndex                 = 2,
+			})
+			make("UIListLayout", { Parent = col1, Padding = U(0, 6), SortOrder = Enum.SortOrder.LayoutOrder })
 
-				local col2 = make("ScrollingFrame", {
-					Parent                 = colHolder, Name = uid(),
-					BackgroundTransparency = 1,
-					BorderSizePixel        = 0,
-					ScrollBarThickness     = 0,
-					CanvasSize             = U2.fromOffset(0, 0),
-					AutomaticCanvasSize    = Enum.AutomaticSize.Y,
-					ZIndex                 = 2,
-				})
-				make("UIListLayout", { Parent = col2, Padding = U(0, 6), SortOrder = Enum.SortOrder.LayoutOrder })
+			local col2 = make("ScrollingFrame", {
+				Parent                 = colHolder, Name = uid(),
+				Position               = U2.new(0.5, 4, 0, 0),
+				Size                   = U2.new(0.5, -4, 1, 0),
+				BackgroundTransparency = 1,
+				BorderSizePixel        = 0,
+				ScrollBarThickness     = 0,
+				CanvasSize             = U2.fromOffset(0, 0),
+				AutomaticCanvasSize    = Enum.AutomaticSize.Y,
+				ZIndex                 = 2,
+			})
+			make("UIListLayout", { Parent = col2, Padding = U(0, 6), SortOrder = Enum.SortOrder.LayoutOrder })
 
 				Library.SearchItems[pageFrame] = {}
 
@@ -1116,8 +1104,7 @@ local Library = {} do
 			local container = make("Frame", {
 				Parent              = self._content, Name = uid(),
 				BackgroundTransparency = 1,
-				Size                = U2.fromOffset(0, totalH),
-				Size                = U2.new(1, 0, 0, totalH),
+			Size                = U2.new(1, 0, 0, totalH),
 				ZIndex              = 5,
 			})
 
