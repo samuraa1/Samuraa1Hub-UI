@@ -3233,6 +3233,15 @@ local Library do
                     if firstPage and not firstPage.Active then
                         firstPage:Turn(true)
                     end
+                    for __, Value in Window.Pages do 
+                        if Value.Active then 
+                            for _, Value2 in Value.Sections do 
+                                task.spawn(function()
+                                    Value2:TweenElements(true)
+                                end)
+                            end
+                        end
+                    end
                 end)
             end
 
@@ -3375,18 +3384,6 @@ local Library do
                 end)
             end
             --]]
-
-            function Window:Init()
-                for __, Value in Window.Pages do 
-                    if Value.Active then 
-                        for _, Value2 in Value.Sections do 
-                            task.spawn(function()
-                                Value2:TweenElements(true)
-                            end)
-                        end
-                    end
-                end
-            end
 
             --[[Library:Connect(UserInputService.InputBegan, function(Input)
                 if tostring(Input.KeyCode) == Library.MenuKeybind or tostring(Input.UserInputType) == Library.MenuKeybind then
@@ -7300,7 +7297,7 @@ local Library do
                 end
             end
 
-            function Keybind:SetMode(Mode) -- hard coded
+            function Keybind:SetMode(Mode, SkipCallback) -- hard coded
                 if Mode == "Toggle" then
                     Items["Background"]:Tween(TweenInfo.new(0.4, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {Position = UDim2New(0, 0, 0, 0), Size = UDim2New(0.35, 0, 1, 0)})
                     Items["Toggle"]:ChangeItemTheme({TextColor3 = function()
@@ -7359,7 +7356,7 @@ local Library do
                     Toggled = Keybind.Toggled
                 }
 
-                if Data.Callback then 
+                if Data.Callback and not SkipCallback then 
                     Library:SafeCall(Data.Callback, Keybind.Toggled)
                 end
             end
@@ -7419,10 +7416,10 @@ local Library do
 
                     if Key.ModeSelected then
                         Keybind.ModeSelected = Key.Mode
-                        Keybind:SetMode(Key.Mode)
+                        Keybind:SetMode(Key.Mode, SkipCallback)
                     else
                         Keybind.ModeSelected = "Toggle"
-                        Keybind:SetMode("Toggle")
+                        Keybind:SetMode("Toggle", SkipCallback)
                     end
 
                     local KeyString = Keys[Keybind.Key] or StringGSub(tostring(RealKey), "Enum.", "") or RealKey
@@ -7440,7 +7437,7 @@ local Library do
                     Update()
                 elseif TableFind({"Toggle", "Hold", "Always"}, Key) then
                     Keybind.ModeSelected = Key
-                    Keybind:SetMode(Key)
+                    Keybind:SetMode(Key, SkipCallback)
 
                     if Data.Callback and not SkipCallback then 
                         Library:SafeCall(Data.Callback, Keybind.Toggled)
