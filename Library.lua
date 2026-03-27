@@ -212,11 +212,22 @@ local Library do
         Tween.__index = Tween
 
         Tween.Create = function(self, Item, Info, Goal, IsRawItem)
-            Item = IsRawItem and Item or Item.Instance
+            if not Item then return setmetatable({}, Tween) end
+            local ok, inst = pcall(function() return IsRawItem and Item or Item.Instance end)
+            if not ok or not inst then return setmetatable({}, Tween) end
+            Item = inst
+
+            if not Library then return setmetatable({}, Tween) end
             Info = Info or TweenInfo.new(Library.Tween.Time, Library.Tween.Style, Library.Tween.Direction)
 
+            local tweenObj
+            local ok2 = pcall(function()
+                tweenObj = TweenService:Create(Item, Info, Goal)
+            end)
+            if not ok2 or not tweenObj then return setmetatable({}, Tween) end
+
             local NewTween = {
-                Tween = TweenService:Create(Item, Info, Goal),
+                Tween = tweenObj,
                 Info = Info,
                 Goal = Goal,
                 Item = Item
