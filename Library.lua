@@ -808,7 +808,7 @@ local Library do
 
         pcall(function() UserInputService.MouseIconEnabled = true end)
         if Library.CursorConn then pcall(function() Library.CursorConn:Disconnect() end) end
-        if Library.CursorGui then Library.CursorGui:Clean() end
+        if Library.CursorGui then pcall(function() Library.CursorGui:Destroy() end) end
 
         Library = nil 
         getgenv().Library = nil
@@ -8363,35 +8363,33 @@ local Library do
     end
 
     do
-        local CursorGui = Instances:Create("ScreenGui", {
-            Parent = gethui(),
-            Name = "\0",
-            ZIndexBehavior = Enum.ZIndexBehavior.Global,
-            DisplayOrder = 999,
-            ResetOnSpawn = false
-        })
+        local gui = Instance.new("ScreenGui")
+        gui.Name = "\0"
+        gui.ZIndexBehavior = Enum.ZIndexBehavior.Global
+        gui.DisplayOrder = 999
+        gui.ResetOnSpawn = false
+        gui.Parent = gethui()
 
-        local CursorFrame = Instances:Create("ImageLabel", {
-            Parent = CursorGui.Instance,
-            Name = "\0",
-            BackgroundTransparency = 1,
-            Size = UDim2New(0, 20, 0, 20),
-            ZIndex = 9999,
-            BorderSizePixel = 0,
-            Image = "rbxassetid://14149837042",
-            ImageColor3 = FromRGB(70, 150, 255)
-        })
+        local img = Instance.new("ImageLabel")
+        img.Name = "\0"
+        img.BackgroundTransparency = 1
+        img.Size = UDim2New(0, 20, 0, 20)
+        img.ZIndex = 9999
+        img.BorderSizePixel = 0
+        img.Image = "rbxassetid://14149837042"
+        img.ImageColor3 = FromRGB(70, 150, 255)
+        img.Parent = gui
 
         pcall(function() UserInputService.MouseIconEnabled = false end)
 
         local CursorConn = RunService.RenderStepped:Connect(function()
             local ok, pos = pcall(UserInputService.GetMouseLocation, UserInputService)
             if ok and pos then
-                CursorFrame.Instance.Position = UDim2New(0, pos.X, 0, pos.Y)
+                img.Position = UDim2New(0, pos.X, 0, pos.Y)
             end
         end)
 
-        Library.CursorGui = CursorGui
+        Library.CursorGui = gui
         Library.CursorConn = CursorConn
     end
 end
