@@ -2464,7 +2464,6 @@ local Library do
                     Size = UDim2New(0, 677, 0, 644),
                     ZIndex = 2,
                     BorderSizePixel = 0,
-                    ClipsDescendants = true,
                     BackgroundColor3 = FromRGB(27, 25, 29)
                 })  Items["MainFrame"]:AddToTheme({BackgroundColor3 = "Background"})
 
@@ -2573,6 +2572,11 @@ local Library do
                     ClipsDescendants = true,
                     BackgroundColor3 = FromRGB(27, 25, 29)
                 })  Items["LeftTabs"]:AddToTheme({BackgroundColor3 = "Background"})
+
+                Instances:Create("UICorner", {
+                    Parent = Items["LeftTabs"].Instance,
+                    CornerRadius = UDimNew(0, 10)
+                })
 
                 Library:MakeBlurred(Items["LeftTabs"], Window)
 
