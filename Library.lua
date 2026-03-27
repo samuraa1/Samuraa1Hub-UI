@@ -793,38 +793,6 @@ local Library do
         PaddingLeft = UDimNew(0, 12)
     })    
 
-    do
-        local CursorGui = Instances:Create("ScreenGui", {
-            Parent = gethui(),
-            Name = "\0",
-            ZIndexBehavior = Enum.ZIndexBehavior.Global,
-            DisplayOrder = 999,
-            ResetOnSpawn = false
-        })
-
-        local CursorFrame = Instances:Create("ImageLabel", {
-            Parent = CursorGui.Instance,
-            Name = "\0",
-            BackgroundTransparency = 1,
-            Size = UDim2New(0, 20, 0, 20),
-            ZIndex = 9999,
-            BorderSizePixel = 0,
-            Image = "rbxassetid://14149837042",
-            ImageColor3 = FromRGB(70, 150, 255)
-        })
-
-        pcall(function() UserInputService.MouseIconEnabled = false end)
-
-        Library:Connect(RunService.RenderStepped, function()
-            local ok, pos = pcall(UserInputService.GetMouseLocation, UserInputService)
-            if ok and pos then
-                CursorFrame.Instance.Position = UDim2New(0, pos.X, 0, pos.Y)
-            end
-        end)
-
-        Library.CursorGui = CursorGui
-    end
-
     Library.Unload = function(self)
         for Index, Value in self.Connections do 
             Value.Connection:Disconnect()
@@ -839,6 +807,7 @@ local Library do
         end
 
         pcall(function() UserInputService.MouseIconEnabled = true end)
+        if Library.CursorConn then pcall(function() Library.CursorConn:Disconnect() end) end
         if Library.CursorGui then Library.CursorGui:Clean() end
 
         Library = nil 
@@ -2482,6 +2451,11 @@ local Library do
                     BorderSizePixel = 0,
                     BackgroundColor3 = FromRGB(27, 25, 29)
                 })  Items["MainFrame"]:AddToTheme({BackgroundColor3 = "Background"})
+
+                Instances:Create("UICorner", {
+                    Parent = Items["MainFrame"].Instance,
+                    CornerRadius = UDimNew(0, 10)
+                })
 
                 if IsMobile then 
                     Instances:Create("UIScale", {
@@ -8387,6 +8361,39 @@ local Library do
             s.Scale = factor
         end)
     end
+end
+
+do
+    local CursorGui = Instances:Create("ScreenGui", {
+        Parent = gethui(),
+        Name = "\0",
+        ZIndexBehavior = Enum.ZIndexBehavior.Global,
+        DisplayOrder = 999,
+        ResetOnSpawn = false
+    })
+
+    local CursorFrame = Instances:Create("ImageLabel", {
+        Parent = CursorGui.Instance,
+        Name = "\0",
+        BackgroundTransparency = 1,
+        Size = UDim2New(0, 20, 0, 20),
+        ZIndex = 9999,
+        BorderSizePixel = 0,
+        Image = "rbxassetid://14149837042",
+        ImageColor3 = FromRGB(70, 150, 255)
+    })
+
+    pcall(function() UserInputService.MouseIconEnabled = false end)
+
+    local CursorConn = RunService.RenderStepped:Connect(function()
+        local ok, pos = pcall(UserInputService.GetMouseLocation, UserInputService)
+        if ok and pos then
+            CursorFrame.Instance.Position = UDim2New(0, pos.X, 0, pos.Y)
+        end
+    end)
+
+    Library.CursorGui = CursorGui
+    Library.CursorConn = CursorConn
 end
 
 getgenv().Library = Library
