@@ -164,6 +164,66 @@ end
 
 
 
+function ThemeManager:GetDefaultThemePath()
+
+    return (self.Folder or "ThemeManager") .. "/default_theme.txt"
+
+end
+
+
+
+function ThemeManager:SetDefaultThemeName(Name)
+
+    Name = tostring(Name or ""):gsub("^%s+", ""):gsub("%s+$", "")
+
+    if Name == "" then return false end
+
+    local folder = self.Folder or "ThemeManager"
+
+    if not isfolder(folder) then makefolder(folder) end
+
+    local ok, err = pcall(function()
+
+        writefile(self:GetDefaultThemePath(), Name)
+
+    end)
+
+    return ok, err
+
+end
+
+
+
+function ThemeManager:GetDefaultThemeName()
+
+    local path = self:GetDefaultThemePath()
+
+    if not isfile(path) then return nil end
+
+    local ok, raw = pcall(readfile, path)
+
+    if not ok or not raw then return nil end
+
+    raw = tostring(raw):gsub("^%s+", ""):gsub("%s+$", "")
+
+    return raw ~= "" and raw or nil
+
+end
+
+
+
+function ThemeManager:ApplySavedDefault()
+
+    local n = self:GetDefaultThemeName()
+
+    if not n then return false end
+
+    return self:LoadTheme(n)
+
+end
+
+
+
 function ThemeManager:GetThemePath(Name)
 
     return (self.Folder or "ThemeManager") .. "/" .. Name .. ".json"
@@ -363,6 +423,76 @@ function ThemeManager:BuildThemeSection(Tab)
         Callback = function(v)
 
             selectedTheme = v
+
+        end
+
+    })
+
+
+
+    ThemeSection:Button({
+
+        Name = "Set selected as default startup theme",
+
+        Callback = function()
+
+            local pick = selectedTheme
+
+            if not pick and Library and Library.Flags then
+
+                pick = Library.Flags["_ThemeManagerList"]
+
+            end
+
+            if not pick or pick == "" then
+
+                Library:Notification({
+
+                    Title = "Themes",
+
+                    Description = "Select a theme in the list first",
+
+                    Duration = 2.5,
+
+                    Icon = NOTIF_ICON,
+
+                })
+
+                return
+
+            end
+
+            local ok = self:SetDefaultThemeName(pick)
+
+            if ok then
+
+                Library:Notification({
+
+                    Title = "Themes",
+
+                    Description = "Default startup theme: \"" .. pick .. "\"",
+
+                    Duration = 2.5,
+
+                    Icon = NOTIF_ICON,
+
+                })
+
+            else
+
+                Library:Notification({
+
+                    Title = "Themes",
+
+                    Description = "Could not save default theme file",
+
+                    Duration = 3,
+
+                    Icon = NOTIF_ICON,
+
+                })
+
+            end
 
         end
 
