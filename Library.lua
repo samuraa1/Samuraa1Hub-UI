@@ -797,6 +797,8 @@ local Library do
         Parent = Library.Holder.Instance,
         Name = "\0",
         BackgroundTransparency = 1,
+        AnchorPoint = Vector2New(1, 0),
+        Position = UDim2New(1, 0, 0, 0),
         Size = UDim2New(0, 0, 1, 0),
         BorderColor3 = FromRGB(0, 0, 0),
         BorderSizePixel = 0,
@@ -807,6 +809,9 @@ local Library do
     Instances:Create("UIListLayout", {
         Parent = Library.NotifHolder.Instance,
         Name = "\0",
+        FillDirection = Enum.FillDirection.Vertical,
+        HorizontalAlignment = Enum.HorizontalAlignment.Right,
+        VerticalAlignment = Enum.VerticalAlignment.Top,
         Padding = UDimNew(0, 12),
         SortOrder = Enum.SortOrder.LayoutOrder
     })
@@ -2353,7 +2358,8 @@ local Library do
                     BackgroundTransparency = 0.35,
                     BorderColor3 = FromRGB(0, 0, 0),
                     BorderSizePixel = 0,
-                    AutomaticSize = Enum.AutomaticSize.XY,
+                    Size = UDim2New(0, 340, 0, 0),
+                    AutomaticSize = Enum.AutomaticSize.Y,
                     BackgroundColor3 = FromRGB(27, 25, 29)
                 })
 
