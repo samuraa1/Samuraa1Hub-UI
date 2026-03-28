@@ -806,11 +806,14 @@ local Library do
     Library.NotifHolder  = Instances:Create("Frame", {
         Parent = Library.Holder.Instance,
         Name = "\0",
+        Active = false,
         BackgroundTransparency = 1,
-        Size = UDim2New(0, 0, 1, 0),
         BorderColor3 = FromRGB(0, 0, 0),
         BorderSizePixel = 0,
-        AutomaticSize = Enum.AutomaticSize.X,
+        Position = UDim2New(0, 0, 0, 0),
+        AnchorPoint = Vector2New(0, 0),
+        Size = UDim2New(0, 0, 0, 0),
+        AutomaticSize = Enum.AutomaticSize.XY,
         BackgroundColor3 = FromRGB(255, 255, 255)
     })
     
@@ -2377,7 +2380,8 @@ local Library do
                     BackgroundTransparency = 0.35,
                     BorderColor3 = FromRGB(0, 0, 0),
                     BorderSizePixel = 0,
-                    AutomaticSize = Enum.AutomaticSize.XY,
+                    Size = UDim2New(0, 340, 0, 0),
+                    AutomaticSize = Enum.AutomaticSize.Y,
                     BackgroundColor3 = FromRGB(27, 25, 29)
                 })
 
@@ -2578,6 +2582,7 @@ local Library do
                 TabSwitchCooldownSec = 0.5,
                 _tabCooldownUntil = 0,
                 _tabSeq = 0,
+                _navOrder = 0,
             }
 
             local Items = { } do
@@ -2698,12 +2703,8 @@ local Library do
                     ClipsDescendants = true,
                     BackgroundColor3 = FromRGB(27, 25, 29)
                 })  Items["LeftTabs"]:AddToTheme({BackgroundColor3 = "Background"})
-
-                Instances:Create("UICorner", {
-                    Parent = Items["LeftTabs"].Instance,
-                    Name = "\0",
-                    CornerRadius = UDimNew(0, 14)
-                })
+                -- No UICorner on LeftTabs: MainFrame has UICorner + ClipsDescendants; a second UICorner
+                -- here fights the parent clip and often shows a sharp bottom-left. Silhouette follows MainFrame.
 
                 Items["LeftTabsScroll"] = Instances:Create("ScrollingFrame", {
                     Parent = Items["LeftTabs"].Instance,
@@ -3418,9 +3419,12 @@ local Library do
 
         Library.Category = function(self, Name)
             local Items = { } do 
+                self._navOrder = (self._navOrder or 0) + 1
+                local navLo = self._navOrder
                 Items["Category"] = Instances:Create("TextLabel", {
                     Parent = self.Items["LeftTabsScroll"].Instance,
                     Name = "\0",
+                    LayoutOrder = navLo,
                     FontFace = Library.Font,
                     TextColor3 = FromRGB(240, 240, 240),
                     TextTransparency = 0.4000000059604645,
@@ -3440,9 +3444,12 @@ local Library do
 
         Library.TabDivider = function(self)
             local Win = self
+            Win._navOrder = (Win._navOrder or 0) + 1
+            local navLo = Win._navOrder
             Instances:Create("Frame", {
                 Parent = Win.Items["LeftTabsScroll"].Instance,
                 Name = "\0",
+                LayoutOrder = navLo,
                 BackgroundColor3 = FromRGB(38, 36, 46),
                 Size = UDim2New(1, -24, 0, 1),
                 BorderSizePixel = 0,
@@ -3462,11 +3469,11 @@ local Library do
                 Icon = Data.Icon or Data.icon or "100050851789190",
                 Columns = Data.Columns or Data.columns or 2,
                 TabLayoutOrder = (function()
+                    self._navOrder = (self._navOrder or 0) + 1
                     if explicitOrder ~= nil then
                         return explicitOrder
                     end
-                    self._tabSeq = (self._tabSeq or 0) + 1
-                    return self._tabSeq
+                    return self._navOrder
                 end)(),
 
                 Items = { },
@@ -3765,8 +3772,9 @@ local Library do
             }
 
             local AddQuickCard
-            Window._tabSeq = (Window._tabSeq or 0) + 1
-            local dashTabLayoutOrder = Data.LayoutOrder or Data.layoutOrder or Window._tabSeq
+            local dashExplicit = Data.LayoutOrder or Data.layoutOrder
+            Window._navOrder = (Window._navOrder or 0) + 1
+            local dashTabLayoutOrder = dashExplicit ~= nil and dashExplicit or Window._navOrder
             local DashItems = {} do
                 -- Tab button (same as normal page)
                 DashItems["Inactive"] = Instances:Create("TextButton", {
