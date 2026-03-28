@@ -1,39 +1,45 @@
 # MentalityUI Rewrite
 
-Modern Roblox UI library (Luau) with sidebar tabs, dashboard page, blur, themes, configs, and a built-in settings tab.  
-Creator: **samet** — [Discord](https://discord.gg/VhvTd5HV8d)
+Modern Roblox UI library (**Luau**): sidebar, two-column pages, **dashboard**, blur, **themes**, **configs**, built-in **settings** tab.
+
+- **Author (library):** samet — [Discord](https://discord.gg/VhvTd5HV8d)
+- **Maintained fork / raw files:** [samuraa1/MentalityUI](https://github.com/samuraa1/MentalityUI)
 
 ---
 
 ## Preview
 
-<img width="1365" height="782" alt="Preview" src="https://github.com/user-attachments/assets/37af0c29-7f6d-43b0-b509-f98531f94d96" />
-<img width="364" height="605" alt="Preview" src="https://github.com/user-attachments/assets/ddf62c2b-75b9-4837-9861-273e56ffd2fd" />
-<img width="421" height="255" alt="Preview" src="https://github.com/user-attachments/assets/47bff499-7fe8-4ea0-8212-a8d3458c6403" />
-<img width="400" height="196" alt="Preview" src="https://github.com/user-attachments/assets/d03796b8-88b8-4e2a-bbd4-8499e77c98c2" />
-<img width="247" height="315" alt="Preview" src="https://github.com/user-attachments/assets/823075ed-25a9-4c82-96dc-4964b7045545" />
-<img width="709" height="707" alt="Preview" src="https://github.com/user-attachments/assets/e8ae94ca-e40c-498b-96e0-c3555153d8d5" />
+<p align="center">
+  <img width="780" alt="Preview" src="https://github.com/user-attachments/assets/37af0c29-7f6d-43b0-b509-f98531f94d96" />
+</p>
+
+<details>
+<summary>More screenshots</summary>
+
+<img width="364" alt="Preview" src="https://github.com/user-attachments/assets/ddf62c2b-75b9-4837-9861-273e56ffd2fd" />
+<img width="421" alt="Preview" src="https://github.com/user-attachments/assets/47bff499-7fe8-4ea0-8212-a8d3458c6403" />
+<img width="400" alt="Preview" src="https://github.com/user-attachments/assets/d03796b8-88b8-4e2a-bbd4-8499e77c98c2" />
+
+</details>
 
 ---
 
-## Features
+## What you get
 
-| Area | Description |
-|------|-------------|
-| **Window** | Left sidebar, two-column sections, resize, minimize, floating logo toggle |
-| **Dashboard** | Welcome block, stats, Discord/links, quick-access cards |
-| **Elements** | Toggle, Slider (editable value), Dropdown (optional **search**), Button, Label, Colorpicker, Keybind, Textbox, Divider |
-| **Theme** | `Library.Theme`, accent gradient, `ThemeManager` presets + save custom JSON |
-| **Configs** | Save/load/delete configs when `writefile` / `readfile` exist |
-| **Settings UI** | Accent, transparency, DPI, floating button, custom cursor, keybind list, menu key |
+| | Feature |
+|---|--------|
+| **Window** | Sidebar tabs, resize, minimize, floating logo button |
+| **Dashboard** | Welcome block, stats, quick links, **AddCard** to jump tabs |
+| **Widgets** | Toggle (with optional **Settings** sub-panel), Slider, Dropdown (**search**), Listbox, Button, Label + Colorpicker, Keybind, Textbox, Divider |
+| **Theme** | `Library.Theme`, accent + gradient, **ThemeManager** presets & JSON save |
+| **Configs** | Built-in list when `writefile` / `readfile` exist |
+| **Settings UI** | Accent, font weight, transparency, **DPI**, floating button, custom cursor, keybind list, menu key |
 
-Raw API mirror: see [`Documentation.lua`](Documentation.lua) (comment block).
+📘 **Full commented script:** [`Example.lua`](Example.lua) — copy/paste reference for almost every API used in production hubs.
 
 ---
 
 ## Installation
-
-Use your executor’s HTTP loader (replace `main` if you use another branch):
 
 ```lua
 local Library = loadstring(game:HttpGet(
@@ -41,7 +47,7 @@ local Library = loadstring(game:HttpGet(
 ))()
 ```
 
-Optional modules (same repository):
+Optional modules (same repo):
 
 ```lua
 local SaveManager = loadstring(game:HttpGet(
@@ -55,63 +61,67 @@ local ThemeManager = loadstring(game:HttpGet(
 
 ---
 
-## Quick start
+## Quick start (minimal)
 
 ```lua
-local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/samuraa1/MentalityUI/main/Library.lua"))()
+local Library = loadstring(game:HttpGet(
+    "https://raw.githubusercontent.com/samuraa1/MentalityUI/main/Library.lua"
+))()
 
-local Window = Library:CreateWindow({
-    Title    = "My Hub",
-    SubTitle = "Game name",
-    Logo     = "1234567890", -- rbxassetid number only
+local Window = Library:Window({
+    Name    = "My Hub",
+    SubName = "Game name",
+    Logo    = "1234567890", -- rbxasset id, digits only
 })
 
 Window:Category("Main")
 local Main = Window:Page({ Name = "Main", Icon = "gamepad-2" })
 
-local Left = Main:Section({ Name = "Features", Icon = "zap", Side = 1 })
+local Section = Main:Section({ Name = "Features", Icon = "zap", Side = 1 })
 
-Left:Toggle({
+Section:Toggle({
     Name     = "Example",
     Flag     = "ExampleToggle",
     Default  = false,
-    Callback = function(v) end,
+    Callback = function(v) print(v) end,
 })
 
-local KeybindList = Library:CreateKeybindList() -- optional
-Library:CreateSettingsPage(Window, KeybindList)
+local KeybindList = Library:KeybindList("Keybinds") -- optional; pass nil on touch-only UIs if you prefer
 
-Window:Init()
+Library:CreateSettingsPage(Window, KeybindList, { PinToBottom = true })
+
+Window:Init() -- required when everything is built
 ```
 
 ---
 
 ## Window API
 
-### `Library:CreateWindow(options)`
+### `Library:Window(options)`
 
-| Field | Type | Description |
-|--------|------|-------------|
-| `Title` | string | Title in the header |
-| `SubTitle` | string? | Subtitle under the title |
-| `Logo` | string? | Image asset id (digits only, no `rbxassetid://`) |
-| `MenuKey` | Enum.KeyCode? | Key to toggle UI (overridable in settings) |
+| Field | Meaning |
+|--------|---------|
+| `Name` | Title in the header |
+| `SubName` | Subtitle under the title |
+| `Logo` | Image **asset id** (numbers only, no `rbxassetid://`) |
+| `Size` | Optional `UDim2` (defaults are set for you) |
+| `MobileScale` | Optional `UIScale` for touch |
 
 ### Methods
 
-| Method | Description |
-|--------|-------------|
-| `Window:Page({ Name, Icon })` | Normal tab page (`Icon`: Lucide name or asset id) |
+| Method | |
+|--------|---|
+| `Window:Page({ Name, Icon })` | Normal tab (`Icon`: Lucide name **or** rbx asset id string) |
 | `Window:DashboardPage({ ... })` | Full dashboard tab |
-| `Window:Category(name)` | Sidebar category label |
-| `Window:TabDivider()` | Horizontal divider in the tab list |
-| `Window:SetOpen(bool)` | Show / hide the main frame |
-| `Window:Toggle()` | Toggle open state |
-| `Window:Init()` | **Call after** building pages (activates first tab, tweens) |
+| `Window:Category(name)` | Sidebar group label |
+| `Window:TabDivider()` | Thin divider between sidebar groups |
+| `Window:SetOpen(bool)` | Show / hide UI |
+| `Window:Toggle()` | Flip open state |
+| `Window:Init()` | **Call last** — activates first tab, runs tweens |
 
 ---
 
-## Dashboard page
+## Dashboard
 
 ```lua
 local Dash = Window:DashboardPage({
@@ -119,10 +129,10 @@ local Dash = Window:DashboardPage({
     Icon            = "layout-dashboard",
     WelcomeText     = "WELCOME TO",
     HubName         = "MY HUB",
-    StatusText      = "subtitle",
+    StatusText      = "subtitle line",
     Badge           = "PLAYER",
     GameName        = "GAME",
-    GameDescription = "Description text",
+    GameDescription = "Short description",
     Links = {
         { Icon = "copy", Tooltip = "Copy", Callback = function() end },
     },
@@ -135,110 +145,120 @@ local Dash = Window:DashboardPage({
     QuickAccess = {},
 })
 
-Dash:AddCard({ Name = "MAIN", Description = "…", Icon = "gamepad-2", Tab = MainPage })
+Dash:AddCard({ Name = "MAIN", Description = "Open main tab", Icon = "gamepad-2", Tab = MainPage })
 ```
 
 ---
 
 ## Sections & elements
 
-Create a section from a page:
-
 ```lua
 local Section = Page:Section({ Name = "Name", Icon = "icon-name", Side = 1 })
 -- Side: 1 = left column, 2 = right column
 ```
 
-### Toggle
+### Toggle (+ optional gear panel)
 
 ```lua
-Section:Toggle({
-    Name     = "Auto farm",
-    Flag     = "AutoFarm",
+local T = Section:Toggle({
+    Name     = "Feature",
+    Flag     = "Feature",
     Default  = false,
     Tooltip  = "Optional",
-    Callback = function(value) end,
+    Callback = function(on) end,
 })
+
+local Sub = T:Settings(260) -- height of sub-panel
+Sub:Slider({ Name = "Extra", Flag = "Extra", Min = 0, Max = 10, Default = 5, Callback = function() end })
 ```
 
-### Slider
+### Slider / Dropdown / Listbox
 
 ```lua
 Section:Slider({
-    Name     = "Speed",
-    Flag     = "Speed",
-    Min      = 0,
-    Max      = 100,
-    Default  = 16,
-    Decimals = 0,
-    Suffix   = "",
-    Callback = function(value) end,
+    Name = "Speed", Flag = "Speed", Min = 0, Max = 100, Default = 16,
+    Decimals = 0, Suffix = "", Callback = function(n) end,
 })
-```
 
-The value label can be **clicked** to type a number manually.
-
-### Dropdown
-
-```lua
 Section:Dropdown({
-    Name     = "Mode",
-    Flag     = "Mode",
-    Items    = { "A", "B", "C" },
-    Default  = "A",
-    Search   = true,  -- optional search box
-    Callback = function(value) end,
+    Name = "Mode", Flag = "Mode", Items = { "A", "B" },
+    Default = "A", Search = true, Callback = function(v) end,
+})
+
+Section:Listbox({
+    Flag = "List", Items = { "One", "Two" }, Default = "One",
+    Multi = false, Callback = function(v) end,
 })
 ```
 
 ### Other
 
 - `Section:Button({ Name, Icon?, Callback })`
-- `Section:Label("text")` — chain `:Colorpicker({ ... })` if needed
+- `Section:Label("text")` — optional `:Colorpicker({ ... })`
 - `Section:Keybind({ Name, Flag, Default = Enum.KeyCode, Callback })`
 - `Section:Textbox({ Flag, Placeholder, Finished, Callback })`
 - `Section:Divider()` / `Section:Divider("Label")`
+
+Value labels on sliders can be **clicked** to type a number.
 
 ---
 
 ## Built-in settings page
 
 ```lua
-local KeybindList = Library:CreateKeybindList()
-Library:CreateSettingsPage(Window, KeybindList)
+local KeybindList = Library:KeybindList("Keybinds")
+Library:CreateSettingsPage(Window, KeybindList, { PinToBottom = true })
 ```
 
-Includes accent colors, font weight, **background transparency**, **DPI scale**, **show floating toggle button**, **custom cursor**, keybind list visibility, **Toggle UI** keybind, and **configs** (when file API is available).
+- **`PinToBottom`** — optional table: `{ PinToBottom = true }` pins **UI Settings** to the **bottom** of the sidebar.
+
+Includes accent + gradient, font weight, background transparency, DPI, floating toggle button, custom cursor, keybind list toggle, menu / UI toggle keybinds, and config list when the file API exists.
 
 ---
 
 ## ThemeManager
 
 ```lua
-local TM = loadstring(game:HttpGet("https://raw.githubusercontent.com/samuraa1/MentalityUI/main/ThemeManager.lua"))()
+local TM = loadstring(game:HttpGet(
+    "https://raw.githubusercontent.com/samuraa1/MentalityUI/main/ThemeManager.lua"
+))()
 TM:SetLibrary(Library)
-TM:SetFolder("MyHubConfigs") -- folder for custom saved themes
+TM:SetFolder("MyHubThemes")
 TM:BuildThemeSection(SettingsPage)
 ```
 
-Built-in presets live in `ThemeManager.lua`; you can **Save** current accent pair as a named JSON theme.
-
 ---
 
-## Flags
-
-- `Library.Flags` — table of current values keyed by `Flag` names.
-- Use unique flags per control so configs do not collide.
-
----
-
-## Cleanup
+## SaveManager (optional)
 
 ```lua
-Library:Unload()
+local SM = loadstring(game:HttpGet(
+    "https://raw.githubusercontent.com/samuraa1/MentalityUI/main/SaveManager.lua"
+))()
+SM:SetLibrary(Library)
+SM:SetFolder("MyHubConfigs")
+SM:BuildConfigSection(SettingsPage)
 ```
 
-Disconnects connections, destroys UI, restores the default mouse cursor.
+---
+
+## Notifications
+
+```lua
+Library:Notification({
+    Title = "Done",
+    Description = "Message",
+    Duration = 3,
+    Icon = "1234567890", -- rbx asset id
+})
+```
+
+---
+
+## Flags & cleanup
+
+- `Library.Flags` — current values keyed by your `Flag` strings. Use **unique** names so configs do not collide.
+- `Library:Unload()` — destroys UI, disconnects hooks, restores default mouse icon.
 
 ---
 
@@ -246,20 +266,15 @@ Disconnects connections, destroys UI, restores the default mouse cursor.
 
 | File | Role |
 |------|------|
-| `Library.lua` | Main UI library |
-| `SaveManager.lua` | Optional save helpers |
-| `ThemeManager.lua` | Theme list + apply/save |
-| `Documentation.lua` | Duplicate API reference (Lua comment block) |
-
----
-
-## Security note
-
-Do **not** commit GitHub personal access tokens or script sources you intend to keep private. Use env vars or local-only upload scripts.
+| `Library.lua` | Main UI |
+| `SaveManager.lua` | Save / load / config list helpers |
+| `ThemeManager.lua` | Preset themes + custom JSON |
+| `Example.lua` | **Commented reference script** (recommended) |
+| `README.md` | This file |
 
 ---
 
 ## Credits
 
 - **MentalityUI Rewrite** — samet  
-- Community scripts using this library — respective authors
+- Scripts using this library — their respective authors
