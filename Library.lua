@@ -99,6 +99,8 @@ local Library do
 
         BlurInstances = {},
         KeybindRows = {},
+        -- flag name -> { Update, ... }; keybind list status stays in sync with Toggle:Set
+        KeybindFlagListeners = {},
 
         UnnamedConnections = 0,
         UnnamedFlags = 0,
@@ -437,9 +439,10 @@ local Library do
                 local pap = parent.AbsolutePosition
                 local psz = parent.AbsoluteSize
                 local gs = Gui.AbsoluteSize
+                local ap = Gui.AnchorPoint
                 local nx = MathClamp(targetAbsX, pap.X, pap.X + MathMax(0, psz.X - gs.X))
                 local ny = MathClamp(targetAbsY, pap.Y, pap.Y + MathMax(0, psz.Y - gs.Y))
-                Gui.Position = UDim2FromOffset(nx - pap.X, ny - pap.Y)
+                Gui.Position = UDim2FromOffset(nx - pap.X + ap.X * gs.X, ny - pap.Y + ap.Y * gs.Y)
             end
         
             local InputChanged
@@ -474,6 +477,72 @@ local Library do
             end)
         
             return Dragging
+        end
+
+        Instances.MakeDraggableLerp = function(self, lerpK)
+            if not self.Instance then
+                return
+            end
+            lerpK = lerpK or 0.22
+            local Gui = self.Instance
+            local Dragging = false
+            local GrabScreenOffset = nil
+            local InputChanged
+
+            local function setPositionFromAbsolute(targetAbsX, targetAbsY)
+                local parent = Gui.Parent
+                if not parent then return end
+                local pap = parent.AbsolutePosition
+                local psz = parent.AbsoluteSize
+                local gs = Gui.AbsoluteSize
+                local ap = Gui.AnchorPoint
+                local nx = MathClamp(targetAbsX, pap.X, pap.X + MathMax(0, psz.X - gs.X))
+                local ny = MathClamp(targetAbsY, pap.Y, pap.Y + MathMax(0, psz.Y - gs.Y))
+                Gui.Position = UDim2FromOffset(nx - pap.X + ap.X * gs.X, ny - pap.Y + ap.Y * gs.Y)
+            end
+
+            self:Connect("InputBegan", function(Input)
+                if Input.UserInputType == Enum.UserInputType.MouseButton1 or Input.UserInputType == Enum.UserInputType.Touch then
+                    Dragging = true
+                    local mouse = UserInputService:GetMouseLocation()
+                    local gAp = Gui.AbsolutePosition
+                    GrabScreenOffset = Vector2.new(mouse.X - gAp.X, mouse.Y - gAp.Y)
+                    if InputChanged then
+                        return
+                    end
+                    InputChanged = Input.Changed:Connect(function()
+                        if Input.UserInputState == Enum.UserInputState.End then
+                            Dragging = false
+                            GrabScreenOffset = nil
+                            InputChanged:Disconnect()
+                            InputChanged = nil
+                        end
+                    end)
+                end
+            end)
+
+            Library:Connect(RunService.RenderStepped, function(dt)
+                if not Dragging or not GrabScreenOffset then
+                    return
+                end
+                local mouse = UserInputService:GetMouseLocation()
+                local wantX = mouse.X - GrabScreenOffset.X
+                local wantY = mouse.Y - GrabScreenOffset.Y
+                local parent = Gui.Parent
+                if not parent then return end
+                local pap = parent.AbsolutePosition
+                local psz = parent.AbsoluteSize
+                local gs = Gui.AbsoluteSize
+                local ap = Gui.AnchorPoint
+                local nx = MathClamp(wantX, pap.X, pap.X + MathMax(0, psz.X - gs.X))
+                local ny = MathClamp(wantY, pap.Y, pap.Y + MathMax(0, psz.Y - gs.Y))
+                local tx = nx - pap.X + ap.X * gs.X
+                local ty = ny - pap.Y + ap.Y * gs.Y
+                local cur = Gui.Position
+                local cx, cy = cur.X.Offset, cur.Y.Offset
+                local a = MathClamp(lerpK * (1 / math.max(dt, 1 / 240)), 0.06, 0.5)
+                Gui.Position = UDim2FromOffset(cx + (tx - cx) * a, cy + (ty - cy) * a)
+            end)
         end
 
         Instances.MakeResizeable = function(self, Minimum, Maximum, Window)
@@ -852,9 +921,23 @@ local Library do
         if Library.CursorGui then pcall(function() Library.CursorGui:Destroy() end) end
         if Library.TooltipGui then Library.TooltipGui:Clean() end
         if Library.KeybindRows then table.clear(Library.KeybindRows) end
+        if Library.KeybindFlagListeners then table.clear(Library.KeybindFlagListeners) end
 
         Library = nil 
         getgenv().Library = nil
+    end
+
+    Library._NotifyKeybindFlagListeners = function(flag)
+        if not flag or not Library.KeybindFlagListeners then
+            return
+        end
+        local t = Library.KeybindFlagListeners[flag]
+        if not t then
+            return
+        end
+        for _, fn in ipairs(t) do
+            pcall(fn)
+        end
     end
 
     Library.SetKeybindRowsVisible = function(self, visible)
@@ -2153,7 +2236,7 @@ local Library do
                     BackgroundColor3 = FromRGB(27, 25, 29)
                 })  Items["KeybindsList"]:AddToTheme({BackgroundColor3 = "Section Background"})
 
-                Items["KeybindsList"]:MakeDraggable()
+                Items["KeybindsList"]:MakeDraggableLerp(0.2)
                 
                 Instances:Create("UICorner", {
                     Parent = Items["KeybindsList"].Instance,
@@ -2599,19 +2682,19 @@ local Library do
                 Items["MainFrame"]:MakeResizeable(Vector2New(Items["MainFrame"].Instance.AbsoluteSize.X, Items["MainFrame"].Instance.AbsoluteSize.Y), Vector2New(9999, 9999), OriginalSizes)
                 Library:MakeBlurred(Items["MainFrame"], Window)
 
-                -- Visible resize corner handle (bottom-right)
+                -- Visible resize handle: parented to Holder so MainFrame UIScale does not scale the grip.
                 do
                     Items["ResizeCorner"] = Instances:Create("TextButton", {
-                        Parent = Items["MainFrame"].Instance,
+                        Parent = Library.Holder.Instance,
                         Name = "\0",
                         AutoButtonColor = false,
                         Text = "",
                         AnchorPoint = Vector2New(1, 1),
-                        Position = UDim2New(1, -2, 1, -2),
-                        Size = UDim2New(0, 18, 0, 18),
+                        Position = UDim2FromOffset(0, 0),
+                        Size = UDim2FromOffset(18, 18),
                         BackgroundTransparency = 1,
                         BorderSizePixel = 0,
-                        ZIndex = 9998,
+                        ZIndex = 250,
                         BackgroundColor3 = FromRGB(255, 255, 255)
                     })
 
@@ -2661,7 +2744,17 @@ local Library do
                     end)
 
                     Library:Connect(RunService.RenderStepped, function()
-                        if not CornerResizing then return end
+                        local mf = Items["MainFrame"].Instance
+                        local rc = Items["ResizeCorner"].Instance
+                        if mf.Parent and rc.Parent then
+                            local mPos = mf.AbsolutePosition
+                            local mSz = mf.AbsoluteSize
+                            local pap = rc.Parent.AbsolutePosition
+                            rc.Position = UDim2FromOffset(mPos.X + mSz.X - 2 - pap.X, mPos.Y + mSz.Y - 2 - pap.Y)
+                        end
+                        if not CornerResizing then
+                            return
+                        end
                         local MousePos = UserInputService:GetMouseLocation()
                         local dx = MousePos.X - CornerStartMouse.X
                         local dy = MousePos.Y - CornerStartMouse.Y
@@ -2686,11 +2779,7 @@ local Library do
                     BackgroundColor3 = FromRGB(27, 25, 29)
                 })  Items["LeftTabs"]:AddToTheme({BackgroundColor3 = "Background"})
 
-                Instances:Create("UICorner", {
-                    Parent = Items["LeftTabs"].Instance,
-                    Name = "\0",
-                    CornerRadius = UDimNew(0, 14)
-                })
+                -- No UICorner on LeftTabs: double rounding vs MainFrame caused a dark pixel at bottom-left.
 
                 Items["LeftTabsScroll"] = Instances:Create("ScrollingFrame", {
                     Parent = Items["LeftTabs"].Instance,
@@ -2773,7 +2862,7 @@ local Library do
                         BorderColor3 = FromRGB(0, 0, 0),
                         Size = UDim2New(0, 54, 0, 54),
                         BorderSizePixel = 0,
-                        BackgroundTransparency = 0.28,
+                        BackgroundTransparency = 0.14,
                         ZIndex = 127,
                         BackgroundColor3 = Library.Theme.Background
                     })  Items["FloatingButton"]:AddToTheme({BackgroundColor3 = "Background"})
@@ -2781,8 +2870,8 @@ local Library do
                     Instances:Create("UIStroke", {
                         Parent = Items["FloatingButton"].Instance,
                         Name = "\0",
-                        Thickness = 1,
-                        Transparency = 0.45,
+                        Thickness = 1.25,
+                        Transparency = 0.28,
                         ApplyStrokeMode = Enum.ApplyStrokeMode.Border,
                         Color = FromRGB(90, 165, 255)
                     }):AddToTheme({Color = "Accent"})
@@ -2823,9 +2912,8 @@ local Library do
                     local floatPressStart = nil
                     local floatGrabOffset = nil
                     local floatMoved = false
-                    local floatTargetPos = nil
                     local FLOAT_DRAG_PX = 8
-                    local FLOAT_LERP = 0.28
+                    local FLOAT_LERP = 0.32
 
                     Items["FloatingButton"]:Connect("InputBegan", function(Input)
                         if Input.UserInputType == Enum.UserInputType.MouseButton1 or Input.UserInputType == Enum.UserInputType.Touch then
@@ -2849,7 +2937,6 @@ local Library do
                             floatPressStart = nil
                             floatGrabOffset = nil
                             floatMoved = false
-                            floatTargetPos = nil
                         end
                     end)
 
@@ -2872,17 +2959,17 @@ local Library do
                         local psz = parent.AbsoluteSize
                         local sz = inst.AbsoluteSize
                         local p0 = parent.AbsolutePosition
-                        local wantX = now.X - floatGrabOffset.X
-                        local wantY = now.Y - floatGrabOffset.Y
-                        wantX = MathClamp(wantX, p0.X, p0.X + MathMax(0, psz.X - sz.X))
-                        wantY = MathClamp(wantY, p0.Y, p0.Y + MathMax(0, psz.Y - sz.Y))
-                        floatTargetPos = Vector2.new(wantX - p0.X, wantY - p0.Y)
+                        local anch = inst.AnchorPoint
+                        local wantTLX = now.X - floatGrabOffset.X
+                        local wantTLY = now.Y - floatGrabOffset.Y
+                        wantTLX = MathClamp(wantTLX, p0.X, p0.X + MathMax(0, psz.X - sz.X))
+                        wantTLY = MathClamp(wantTLY, p0.Y, p0.Y + MathMax(0, psz.Y - sz.Y))
+                        local tx = wantTLX - p0.X + anch.X * sz.X
+                        local ty = wantTLY - p0.Y + anch.Y * sz.Y
                         local cur = inst.Position
                         local cx = cur.X.Offset
                         local cy = cur.Y.Offset
-                        local tx = floatTargetPos.X
-                        local ty = floatTargetPos.Y
-                        local a = math.clamp(FLOAT_LERP * (1 / math.max(dt, 1/240)), 0.08, 0.55)
+                        local a = math.clamp(FLOAT_LERP * (1 / math.max(dt, 1 / 240)), 0.08, 0.55)
                         inst.Position = UDim2FromOffset(cx + (tx - cx) * a, cy + (ty - cy) * a)
                     end)
                 end
@@ -4192,8 +4279,10 @@ local Library do
                     local linkStroke = Instances:Create("UIStroke", {
                         Parent = linkBtn.Instance,
                         Name = "\0",
-                        Thickness = 2.5,
-                        Transparency = 0.85,
+                        Thickness = 2.25,
+                        LineJoinMode = Enum.LineJoinMode.Round,
+                        ApplyStrokeMode = Enum.ApplyStrokeMode.Border,
+                        Transparency = 0.38,
                     }):AddToTheme({Color = "Accent"})
 
                     local linkIcon = Instances:Create("ImageLabel", {
@@ -4223,14 +4312,14 @@ local Library do
                         linkBtn:Tween(TweenInfo.new(0.2, Enum.EasingStyle.Quart), {BackgroundTransparency = 0})
                         linkHoverRing:Tween(TweenInfo.new(0.2, Enum.EasingStyle.Quart), {BackgroundTransparency = 0.35})
                         if linkStroke and linkStroke.Instance then
-                            TweenService:Create(linkStroke.Instance, TweenInfo.new(0.2, Enum.EasingStyle.Quart), {Transparency = 0.05}):Play()
+                            TweenService:Create(linkStroke.Instance, TweenInfo.new(0.2, Enum.EasingStyle.Quart), {Transparency = 0.06}):Play()
                         end
                     end)
                     linkBtn:OnHoverLeave(function()
                         linkBtn:Tween(TweenInfo.new(0.2, Enum.EasingStyle.Quart), {BackgroundTransparency = 0.1})
                         linkHoverRing:Tween(TweenInfo.new(0.2, Enum.EasingStyle.Quart), {BackgroundTransparency = 1})
                         if linkStroke and linkStroke.Instance then
-                            TweenService:Create(linkStroke.Instance, TweenInfo.new(0.25, Enum.EasingStyle.Quart), {Transparency = 0.85}):Play()
+                            TweenService:Create(linkStroke.Instance, TweenInfo.new(0.25, Enum.EasingStyle.Quart), {Transparency = 0.38}):Play()
                         end
                     end)
                     if link.Tooltip then
@@ -4238,16 +4327,31 @@ local Library do
                     end
                 end
 
-                Instances:Create("Frame", {
-                    Parent = LeftCol.Instance,
-                    Name = "\0",
-                    BackgroundColor3 = FromRGB(38, 36, 46),
-                    Position = UDim2New(0, 0, 0, 120),
-                    Size = UDim2New(1, 0, 0, 1),
-                    BorderSizePixel = 0,
-                    ZIndex = 2,
-                    BackgroundTransparency = 0.42
-                }):AddToTheme({BackgroundColor3 = "Element"})
+                do
+                    local d1 = Instances:Create("Frame", {
+                        Parent = LeftCol.Instance,
+                        Name = "\0",
+                        BackgroundColor3 = FromRGB(38, 36, 46),
+                        Position = UDim2New(0, 0, 0, 119),
+                        Size = UDim2New(1, 0, 0, 2),
+                        BorderSizePixel = 0,
+                        ZIndex = 2,
+                        BackgroundTransparency = 0.22
+                    })
+                    d1:AddToTheme({BackgroundColor3 = "Outline"})
+                    Instances:Create("UIGradient", {
+                        Parent = d1.Instance,
+                        Name = "\0",
+                        Rotation = 0,
+                        Transparency = NumSequence{
+                            NumSequenceKeypoint(0, 1),
+                            NumSequenceKeypoint(0.12, 0.35),
+                            NumSequenceKeypoint(0.5, 0),
+                            NumSequenceKeypoint(0.88, 0.35),
+                            NumSequenceKeypoint(1, 1),
+                        },
+                    })
+                end
 
                 DashItems["GameName"] = Instances:Create("TextLabel", {
                     Parent = LeftCol.Instance,
@@ -4284,16 +4388,31 @@ local Library do
                     BackgroundColor3 = FromRGB(255, 255, 255)
                 })
 
-                Instances:Create("Frame", {
-                    Parent = LeftCol.Instance,
-                    Name = "\0",
-                    BackgroundColor3 = FromRGB(38, 36, 46),
-                    Position = UDim2New(0, 0, 0, 198),
-                    Size = UDim2New(1, 0, 0, 1),
-                    BorderSizePixel = 0,
-                    ZIndex = 2,
-                    BackgroundTransparency = 0.42
-                }):AddToTheme({BackgroundColor3 = "Element"})
+                do
+                    local d2 = Instances:Create("Frame", {
+                        Parent = LeftCol.Instance,
+                        Name = "\0",
+                        BackgroundColor3 = FromRGB(38, 36, 46),
+                        Position = UDim2New(0, 0, 0, 197),
+                        Size = UDim2New(1, 0, 0, 2),
+                        BorderSizePixel = 0,
+                        ZIndex = 2,
+                        BackgroundTransparency = 0.22
+                    })
+                    d2:AddToTheme({BackgroundColor3 = "Outline"})
+                    Instances:Create("UIGradient", {
+                        Parent = d2.Instance,
+                        Name = "\0",
+                        Rotation = 0,
+                        Transparency = NumSequence{
+                            NumSequenceKeypoint(0, 1),
+                            NumSequenceKeypoint(0.12, 0.35),
+                            NumSequenceKeypoint(0.5, 0),
+                            NumSequenceKeypoint(0.88, 0.35),
+                            NumSequenceKeypoint(1, 1),
+                        },
+                    })
+                end
 
                 local RightCol = Instances:Create("Frame", {
                     Parent = DashItems["HeroRow"].Instance,
@@ -5875,6 +5994,8 @@ local Library do
                 if Toggle.Callback and not SkipCallback then 
                     Library:SafeCall(Toggle.Callback, Toggle.Value)
                 end
+
+                Library._NotifyKeybindFlagListeners(Toggle.Flag)
             end
 
             local SettingsItem = { }
@@ -6221,7 +6342,8 @@ local Library do
                     Flag = Keybind.Flag,
                     Default = Keybind.Default,
                     Mode = Keybind.Mode,
-                    Callback = Keybind.Callback
+                    Callback = Keybind.Callback,
+                    syncFlag = Toggle.Flag,
                 })
 
                 return NewKeybind
@@ -7532,6 +7654,11 @@ local Library do
                 modeDefault = "Toggle"
             end
 
+            local syncFlag = Data.syncFlag or Data.SyncFlag
+            if syncFlag == "" then
+                syncFlag = nil
+            end
+
             local Keybind = {
                 Window = self.Window,
                 Page = self.Page,
@@ -7542,6 +7669,7 @@ local Library do
                 Default = Data.Default or Data.default or Enum.KeyCode.RightShift,
                 Callback = Data.Callback or Data.callback or function() end,
                 Mode = modeDefault,
+                syncFlag = syncFlag,
 
                 Value = "",
                 ModeSelected = "",
@@ -7773,10 +7901,17 @@ local Library do
                 KeyListItem = Library.KeyList:Add("", "")
             end
 
+            local function keyListStatusOn()
+                if Keybind.syncFlag then
+                    return Library.Flags[Keybind.syncFlag] == true
+                end
+                return Keybind.Toggled
+            end
+
             local Update = function()
-                if KeyListItem then 
+                if KeyListItem then
                     KeyListItem:Set(Data.Name, Keybind.Value)
-                    KeyListItem:SetStatus(Keybind.Toggled)
+                    KeyListItem:SetStatus(keyListStatusOn())
                 end
             end
 
@@ -8030,6 +8165,11 @@ local Library do
 
             Library.SetFlags[Keybind.Flag] = function(Value)
                 Keybind:Set(Value, true)
+            end
+
+            if Keybind.syncFlag then
+                Library.KeybindFlagListeners[Keybind.syncFlag] = Library.KeybindFlagListeners[Keybind.syncFlag] or {}
+                TableInsert(Library.KeybindFlagListeners[Keybind.syncFlag], Update)
             end
 
             if Data.Tooltip or Data.tooltip then
