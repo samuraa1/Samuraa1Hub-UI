@@ -2767,7 +2767,7 @@ local Library do
                     Parent = Items["MainFrame"].Instance,
                     Name = "\0",
                     Visible = true,
-                    BorderColor3 = FromRGB(0, 0, 0),
+                    BorderColor3 = Library.Theme.Background,
                     AnchorPoint = Vector2New(0, 0),
                     Position = UDim2New(0, 0, 0, 55),
                     BackgroundTransparency = 0.12,
@@ -2776,10 +2776,24 @@ local Library do
                     BorderSizePixel = 0,
                     ClipsDescendants = true,
                     BackgroundColor3 = FromRGB(27, 25, 29)
-                })  Items["LeftTabs"]:AddToTheme({BackgroundColor3 = "Background"})
+                })  Items["LeftTabs"]:AddToTheme({BackgroundColor3 = "Background", BorderColor3 = "Background"})
 
-                -- No UICorner here: MainFrame already clips children to the same rounded rect (radius 14).
-                -- A second UICorner on this column stacked with the window edge caused a stray black pixel at the bottom-left.
+                Instances:Create("UICorner", {
+                    Parent = Items["LeftTabs"].Instance,
+                    Name = "\0",
+                    CornerRadius = UDimNew(0, 14),
+                })
+
+                -- Same radius as MainFrame. Black border default + corner AA caused a stray dark pixel; border matches Background, stroke fills edge gaps.
+                Instances:Create("UIStroke", {
+                    Parent = Items["LeftTabs"].Instance,
+                    Name = "\0",
+                    Thickness = 1,
+                    Transparency = 0,
+                    ApplyStrokeMode = Enum.ApplyStrokeMode.Border,
+                    LineJoinMode = Enum.LineJoinMode.Round,
+                    Color = Library.Theme.Background,
+                }):AddToTheme({Color = "Background"})
 
                 Items["LeftTabsScroll"] = Instances:Create("ScrollingFrame", {
                     Parent = Items["LeftTabs"].Instance,
