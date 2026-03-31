@@ -42,7 +42,8 @@ function SaveManager:Save(Name)
     if not isfolder(folder) then makefolder(folder) end
 
     local data = {}
-    for flag, value in next, Library.Flags do
+    local flags = Library.Flags
+    for flag, value in next, flags do
         if type(value) == "boolean" or type(value) == "number" or type(value) == "string" then
             data[flag] = value
         elseif typeof(value) == "Color3" then
@@ -70,6 +71,8 @@ function SaveManager:Load(Name)
     end)
     if not ok then return false, "Failed to parse config" end
 
+    local setFlags = Library.SetFlags
+    local libFlags = Library.Flags
     for flag, value in next, data do
         if type(value) == "table" and value._type == "Color3" then
             value = Color3.new(value.r, value.g, value.b)
@@ -80,10 +83,10 @@ function SaveManager:Load(Name)
             end)
             if ok2 then value = ev else continue end
         end
-        if Library.SetFlags and Library.SetFlags[flag] then
-            Library.SetFlags[flag](value)
+        if setFlags and setFlags[flag] then
+            setFlags[flag](value)
         else
-            Library.Flags[flag] = value
+            libFlags[flag] = value
         end
     end
 
