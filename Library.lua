@@ -2778,31 +2778,8 @@ local Library do
                     BackgroundColor3 = FromRGB(27, 25, 29)
                 })  Items["LeftTabs"]:AddToTheme({BackgroundColor3 = "Background"})
 
-                Instances:Create("UICorner", {
-                    Parent = Items["LeftTabs"].Instance,
-                    Name = "\0",
-                    CornerRadius = UDimNew(0, 14),
-                })
-
-                -- Covers a 1px anti-alias gap at the inner bottom-left (stray dark pixel) without removing rounding.
-                Items["LeftTabCornerSeal"] = Instances:Create("Frame", {
-                    Parent = Items["LeftTabs"].Instance,
-                    Name = "\0",
-                    AnchorPoint = Vector2New(0, 1),
-                    Position = UDim2New(0, 0, 1, 0),
-                    Size = UDim2New(0, 20, 0, 20),
-                    BackgroundTransparency = 0,
-                    BorderSizePixel = 0,
-                    ZIndex = 1,
-                    ClipsDescendants = false,
-                    BackgroundColor3 = FromRGB(27, 25, 29)
-                })
-                Items["LeftTabCornerSeal"]:AddToTheme({BackgroundColor3 = "Background"})
-                Instances:Create("UICorner", {
-                    Parent = Items["LeftTabCornerSeal"].Instance,
-                    Name = "\0",
-                    CornerRadius = UDimNew(0, 14),
-                })
+                -- No UICorner here: MainFrame already clips children to the same rounded rect (radius 14).
+                -- A second UICorner on this column stacked with the window edge caused a stray black pixel at the bottom-left.
 
                 Items["LeftTabsScroll"] = Instances:Create("ScrollingFrame", {
                     Parent = Items["LeftTabs"].Instance,
