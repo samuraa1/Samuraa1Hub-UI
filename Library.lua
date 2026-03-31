@@ -2790,8 +2790,8 @@ local Library do
                     Name = "\0",
                     AnchorPoint = Vector2New(0, 1),
                     Position = UDim2New(0, 0, 1, 0),
-                    Size = UDim2New(0, 18, 0, 18),
-                    BackgroundTransparency = 0.12,
+                    Size = UDim2New(0, 20, 0, 20),
+                    BackgroundTransparency = 0,
                     BorderSizePixel = 0,
                     ZIndex = 1,
                     ClipsDescendants = false,
@@ -6273,6 +6273,8 @@ local Library do
                 end)
 
                 Settings.Items = SettingsItem
+                Settings.Window = Toggle.Window
+                Settings.Page = Toggle.Page
 
                 setmetatable(Settings, Library.Sections)
                 return Settings
