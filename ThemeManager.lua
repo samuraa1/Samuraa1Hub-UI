@@ -390,7 +390,7 @@ function ThemeManager:BuildThemeSection(Tab)
 
 
 
-    local ThemeSection = Tab:Section({Name = "Themes", Side = 1})
+    local ThemeSection = Tab:Section({Name = "Themes", Side = 2, LayoutOrder = -300, Icon = "palette"})
 
 
 
