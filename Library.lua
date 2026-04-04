@@ -5081,7 +5081,7 @@ local Library do
                         Instances:Create("UISizeConstraint", {
                             Parent = SubItems["RealMessage"].Instance,
                             Name = "\0",
-                            MaxSize = Vector2New(370, 70)
+                            MaxSize = Vector2New(370, 80)
                         })
 
                         Instances:Create("UICorner", {
@@ -5183,7 +5183,7 @@ local Library do
                         Instances:Create("UISizeConstraint", {
                             Parent = SubItems["RealMessage"].Instance,
                             Name = "\0",
-                            MaxSize = Vector2New(370, 75)
+                            MaxSize = Vector2New(370, 80)
                         })
 
                         Instances:Create("UICorner", {
